@@ -197,7 +197,14 @@ void rx_slow_hash(const uint64_t mainheight, const uint64_t seedheight, const ch
   uint64_t s_height = rx_seedheight(mainheight);
   int toggle = (s_height & SEEDHASH_EPOCH_BLOCKS) != 0;
   randomx_flags flags = enabled_flags() & ~disabled_flags();
+  /* Large pages are unavailable/denied in most unprivileged environments */
   flags &= ~RANDOMX_FLAG_LARGE_PAGES;
+#ifdef __ANDROID__
+  /* Android enforces W^X: JIT requires mmap(PROT_WRITE|PROT_EXEC) which is
+   * denied by the kernel. Force the portable interpreted mode instead. */
+  flags &= ~RANDOMX_FLAG_JIT;
+  flags = RANDOMX_FLAG_DEFAULT;
+#endif
   rx_state *rx_sp;
   randomx_cache *cache;
 
@@ -235,8 +242,10 @@ void rx_slow_hash(const uint64_t mainheight, const uint64_t seedheight, const ch
     memcpy(rx_sp->rs_hash, seedhash, HASH_SIZE);
   }
   if (rx_vm == NULL) {
+    /* Only apply SECURE mode on platforms where JIT is actually in use.
+     * On Android JIT was already cleared above so this is a no-op there. */
     if ((flags & RANDOMX_FLAG_JIT) && !miners) {
-        flags |= RANDOMX_FLAG_SECURE & ~disabled_flags();
+        flags |= RANDOMX_FLAG_SECURE;
     }
     if (miners && (disabled_flags() & RANDOMX_FLAG_FULL_MEM)) {
       miners = 0;
