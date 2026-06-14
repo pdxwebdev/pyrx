@@ -1,6 +1,7 @@
 [submodule "external/pybind11"]
 	path = external/pybind11
 	url = https://github.com/pybind/pybind11
+	branch = v3.0
 [submodule "external/RandomX"]
 	path = external/RandomX
 	url = https://github.com/pdxwebdev/RandomX
