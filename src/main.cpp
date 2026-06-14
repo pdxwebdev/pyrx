@@ -41,6 +41,10 @@ struct PyRX {
     py::bytes get_rx_hash(const std::string &input,
             const std::string &seed_hash, const uint64_t height)
     {
+        if (seed_hash.size() != 32) {
+            throw py::value_error("seed_hash must be exactly 32 raw bytes");
+        }
+
         uint64_t seed_height = rx_seedheight(height);
         std::string output;
         output.resize(32);
